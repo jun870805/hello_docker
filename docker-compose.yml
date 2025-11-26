@@ -1,33 +1,42 @@
 version: '3.8'
 
 services:
-  # 你的 Python 機器人
+  # 這是 Streamlit 網頁伺服器
   bot:
     build: .
-    container_name: ticket-bot
+    container_name: hello-bot
     volumes:
+      # 掛載程式碼，方便修改
       - .:/app
+      # 為了存截圖，我們不需要額外掛載，因為 .:/app 已經包含了 data/screenshots
     environment:
       - SELENIUM_HOST=http://chrome:4444/wd/hub
-      - TZ=Asia/Taipei # 同步時區
+      - TZ=Asia/Taipei
+      - EXTERNAL_HOST=peterfan0805
     depends_on:
       - chrome
-    # 使用 python -u 確保 log 立即印出
-    command: python -u main.py
+    ports:
+      - "8501:8501"
+    # 使用 streamlit 啟動，並設定允許跨域 (解決在某些網路下連線問題)
+    command: streamlit run web_app.py --server.address=0.0.0.0 --server.enableCORS=false
 
-  # Chrome 瀏覽器 + NoVNC
+  # 這是 Chrome 瀏覽器 (Backend)
   chrome:
     image: selenium/standalone-chrome:latest
-    container_name: chrome-browser
-    shm_size: "2gb" # 防止記憶體不足崩潰
+    container_name: hello-chrome
+    shm_size: "2gb"
     ports:
       - "4444:4444"
-      - "7900:7900" # NoVNC 網頁入口
+      - "7900:7900"
     environment:
-      - SE_NODE_MAX_SESSIONS=1
-      - SE_VNC_NO_PASSWORD=1 # 免密碼登入 NoVNC
-      - TZ=Asia/Taipei       # 設定瀏覽器內部時區
+      - SE_NODE_MAX_SESSIONS=4
+      - SE_NODE_SESSION_TIMEOUT=60
+      - SE_VNC_NO_PASSWORD=1
+      - TZ=Asia/Taipei
+    # 解除安全限制 (關鍵修復)
+    security_opt:
+      - seccomp:unconfined
     volumes:
-      # 🔥 關鍵：把 Chrome 的設定檔存到 Linux 本機，實現「養號」
-      - ./data/profile:/chrome-profile
+      # 養號關鍵：設定檔掛載
+      # - ./data/profile:/chrome-profile
       - ./data/downloads:/home/seluser/Downloads
