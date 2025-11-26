@@ -54,7 +54,14 @@ def _get_cached_driver():
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
-    
+   
+    # 4. 優化參數
+    options.add_argument("--lang=zh-TW")            # 設定繁體中文
+    options.add_argument("--disable-popup-blocking") # 禁止彈窗
+    options.add_argument("--disable-extensions")     # 禁用擴充
+    options.add_argument("--no-first-run")           # 跳過歡迎頁
+    options.add_argument("--no-default-browser-check") # 不檢查預設瀏覽器
+
     print("🔵 正在建立新的 Chrome 連線...")
     driver = webdriver.Remote(command_executor=selenium_host, options=options)
     return driver
