@@ -1,26 +1,33 @@
 version: '3.8'
 
 services:
-  # 1. 控制者：你的 Python 程式
+  # 你的 Python 機器人
   bot:
     build: .
-    container_name: hello-bot
-    depends_on:
-      - chrome
+    container_name: ticket-bot
+    volumes:
+      - .:/app
     environment:
       - SELENIUM_HOST=http://chrome:4444/wd/hub
-    # 讓容器跑完腳本後自動退出，或者你可以改 command: tail -f /dev/null 來長駐
-    command: python main.py
+      - TZ=Asia/Taipei # 同步時區
+    depends_on:
+      - chrome
+    # 使用 python -u 確保 log 立即印出
+    command: python -u main.py
 
-  # 2. 被控者：Chrome 瀏覽器 (含 NoVNC 畫面)
+  # Chrome 瀏覽器 + NoVNC
   chrome:
     image: selenium/standalone-chrome:latest
-    container_name: hello-chrome
-    shm_size: "2gb" # 給足記憶體防崩潰
+    container_name: chrome-browser
+    shm_size: "2gb" # 防止記憶體不足崩潰
     ports:
-      - "4444:4444" # 讓你可以從外部測試
-      - "7900:7900" # <--- 這是 NoVNC 的網頁入口
+      - "4444:4444"
+      - "7900:7900" # NoVNC 網頁入口
     environment:
       - SE_NODE_MAX_SESSIONS=1
-      - SE_VNC_NO_PASSWORD=1
-
+      - SE_VNC_NO_PASSWORD=1 # 免密碼登入 NoVNC
+      - TZ=Asia/Taipei       # 設定瀏覽器內部時區
+    volumes:
+      # 🔥 關鍵：把 Chrome 的設定檔存到 Linux 本機，實現「養號」
+      - ./data/profile:/chrome-profile
+      - ./data/downloads:/home/seluser/Downloads
