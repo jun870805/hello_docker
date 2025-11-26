@@ -1,42 +1,27 @@
 version: '3.8'
 
 services:
-  # 這是 Streamlit 網頁伺服器
   bot:
     build: .
-    container_name: hello-bot
+    container_name: ticket-bot-manager
+    # 🔥 賦予控制 Docker 的權限 (DooD 模式)
     volumes:
-      # 掛載程式碼，方便修改
       - .:/app
-      # 為了存截圖，我們不需要額外掛載，因為 .:/app 已經包含了 data/screenshots
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - SELENIUM_HOST=http://chrome:4444/wd/hub
       - TZ=Asia/Taipei
       - EXTERNAL_HOST=peterfan0805
-    depends_on:
-      - chrome
+      # 🔥 指定網路名稱，讓 Python 知道要把新機器人丟進哪裡
+      - DOCKER_NETWORK=ticket_bot
     ports:
       - "8501:8501"
-    # 使用 streamlit 啟動，並設定允許跨域 (解決在某些網路下連線問題)
+    # 加入指定網路
+    networks:
+      - ticket_bot
     command: streamlit run web_app.py --server.address=0.0.0.0 --server.enableCORS=false
 
-  # 這是 Chrome 瀏覽器 (Backend)
-  chrome:
-    image: selenium/standalone-chrome:latest
-    container_name: hello-chrome
-    shm_size: "2gb"
-    ports:
-      - "4444:4444"
-      - "7900:7900"
-    environment:
-      - SE_NODE_MAX_SESSIONS=4
-      - SE_NODE_SESSION_TIMEOUT=60
-      - SE_VNC_NO_PASSWORD=1
-      - TZ=Asia/Taipei
-    # 解除安全限制 (關鍵修復)
-    security_opt:
-      - seccomp:unconfined
-    volumes:
-      # 養號關鍵：設定檔掛載
-      # - ./data/profile:/chrome-profile
-      - ./data/downloads:/home/seluser/Downloads
+# 🔥 顯式定義網路名稱，避免 Docker 自動加前綴 (例如 hello_docker_default)
+networks:
+  ticket_bot:
+    name: ticket_bot
+    driver: bridge
