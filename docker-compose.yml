@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  # 1. 控制者：你的 Python 程式
+  bot:
+    build: .
+    container_name: hello-bot
+    depends_on:
+      - chrome
+    environment:
+      - SELENIUM_HOST=http://chrome:4444/wd/hub
+    # 讓容器跑完腳本後自動退出，或者你可以改 command: tail -f /dev/null 來長駐
+    command: python main.py
+
+  # 2. 被控者：Chrome 瀏覽器 (含 NoVNC 畫面)
+  chrome:
+    image: selenium/standalone-chrome:latest
+    container_name: hello-chrome
+    shm_size: "2gb" # 給足記憶體防崩潰
+    ports:
+      - "4444:4444" # 讓你可以從外部測試
+      - "7900:7900" # <--- 這是 NoVNC 的網頁入口
+
