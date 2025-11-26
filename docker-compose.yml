@@ -20,4 +20,7 @@ services:
     ports:
       - "4444:4444" # 讓你可以從外部測試
       - "7900:7900" # <--- 這是 NoVNC 的網頁入口
+    environment:
+      - SE_NODE_MAX_SESSIONS=1
+      - SE_VNC_NO_PASSWORD=1
 
